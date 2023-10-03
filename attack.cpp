@@ -11,11 +11,26 @@
 #include "cipher.h"
 #include <iostream>
 
-static std::map<char, float> english_frequency = {
-    {'a', 8.167f}, {'b',1.492f}, {'c',2.782f}, {'d',4.253f}, {'e',12.702f}, {'f',2.228f}, {'g', 2.015f},
-    {'h', 6.094f}, {'i',6.966f}, {'j',0.253f}, {'k',1.772f}, {'l',4.025f}, {'m',2.406f}, {'n', 6.749f},
-    {'o', 7.507f}, {'p',1.929f}, {'q',0.095f}, {'r',5.987f}, {'s',6.327f}, {'t',9.056f}, {'u', 2.758f},
-    {'v', 0.978f}, {'w',2.360f}, {'x',0.250f}, {'y',1.974f}, {'z',0.074f}};
+static std::map<char, double> english_frequency = {
+    {'a', 8.167}, {'b',1.492}, {'c',2.782}, {'d',4.253}, {'e',12.702}, {'f',2.228}, {'g', 2.015},
+    {'h', 6.094}, {'i',6.966}, {'j',0.253}, {'k',1.772}, {'l',4.025}, {'m',2.406}, {'n', 6.749},
+    {'o', 7.507}, {'p',1.929}, {'q',0.095}, {'r',5.987}, {'s',6.327}, {'t',9.056}, {'u', 2.758},
+    {'v', 0.978}, {'w',2.360}, {'x',0.250}, {'y',1.974}, {'z',0.074}};
+
+static std::map<char, double> portuguese_frequency = {
+    {'a', 14.634}, {'b',1.043}, {'c',3.882}, {'d',3.882}, {'e',12.570}, {'f',1.023}, {'g', 1.303},
+    {'h', 1.281}, {'i', 6.186}, {'j',0.879}, {'k',0.015}, {'l',2.779}, {'m',4.738}, {'n', 4.446},
+    {'o', 9.735}, {'p',2.523}, {'q',1.204}, {'r',6.530}, {'s',6.805}, {'t',4.336}, {'u', 3.639},
+    {'v', 1.575}, {'w',0.037}, {'x',0.453}, {'y',0.006}, {'z',0.470}};
+
+
+static double ic_random = 0.038466;
+static double ic_english = 0.065;
+static double ic_portuguese = 0.0745;
+static double ic = 0.065;
+static std::map<char, double> language_frequency = english_frequency;
+
+static bool is_english = true;
 
 static std::map<char, int> letter_index= {
     {'a', 0}, {'b',1}, {'c',2}, {'d',3}, {'e',4}, {'f',5}, {'g', 6},
@@ -25,12 +40,6 @@ static std::map<char, int> letter_index= {
 
 static std::string alphabet = "abcdefghijklmnopqrstuvwxyz";
 
-static double ic_random = 0.038466;
-static double ic_english = 0.065;
-
-static double ic_portuguese = 0.0745;
-
-static bool is_english = true;
 
 bool compTrigrams(Trigram& t1, Trigram& t2)
 {
@@ -189,7 +198,7 @@ int guess_key_length(std::string s_in)
         double avg = acc/(double)v.size();
 
         //if avg is closer to random ic than to english ic, ignore value
-        if(fabs(ic_english - avg) > fabs(ic_random - avg))
+        if(fabs(ic - avg) > fabs(ic_random - avg))
         {
             continue;
         }
@@ -206,47 +215,13 @@ int guess_key_length(std::string s_in)
     
     std::sort(vec_ics.begin(), vec_ics.end(), comp_length);
 
+    if(vec_ics.size() == 0)
+    {
+        std::cout << "Unable to break ciphertext. Text is possibly too small.\n\n";
+        exit(0);
+    }
+
     return std::get<0>(vec_ics[0]);
-}
-
-
-
-double chi_squared(std::string s_in)
-{
-    double size = (double) s_in.size();
-
-    //relative frequency 
-    std::vector<double> freq(26, 0.0);
-
-    double ans = 0.0;
-    for(int i = 0; i < 26; i++)
-    {
-        double f = (double) get_letter_frequency(alphabet[i], s_in);
-        freq[i] = f / size * 100.0;
-
-        double f_sqrd = pow(freq[i] - english_frequency[alphabet[i]], 2);
-     
-        double a =  f_sqrd/english_frequency[alphabet[i]];
-
-        ans += a;
-    }
-    return ans;
-}
-
-bool is_portuguese(std::string s_in)
-{
-    std::string pt_letters = "ãáàâéêíóõôúçä";
-
-    bool found = false;
-    for(int i = 0; i < pt_letters.size(); i++)
-    {
-        if(s_in.find(pt_letters[i]) != std::string::npos) 
-        {
-            found = true;
-        }
-    }
-
-    return found;
 }
 
 double str_freq_analysis(std::string s_in)
@@ -258,22 +233,34 @@ double str_freq_analysis(std::string s_in)
     {
         double freq = 
             (double) get_letter_frequency(alphabet[i], s_in)/size;
-        double expected = english_frequency[alphabet[i]]/100.0;
+        double expected = language_frequency[alphabet[i]]/100.0;
         
         acc += freq * expected; 
     }
 
-    if(is_english) return fabs(acc - ic_english);
+    if(is_english) return fabs(acc - ic);
 
     return fabs(acc - ic_portuguese);
 }
 
-
+void set_language(int language)
+{
+    if(language == 1) //english
+    {
+        language_frequency = english_frequency; 
+        ic = ic_english;
+    }
+    if(language == 2)
+    {
+        language_frequency = portuguese_frequency;
+        ic = ic_portuguese;
+    }
+}
 std::string recover_key(std::string s_in)
 {
     int len = guess_key_length(s_in);
 
-    std::cout << "The guessed key length is: " << len << "\n\n";
+    std::cout << "---- The guessed key length is: " << len << "\n\n";
     
     std::vector<std::string> cosets = get_cosets(s_in, len);
     std::vector<std::vector<double>> delta_vec(len, std::vector<double>(26, 0.0));

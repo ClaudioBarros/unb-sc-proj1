@@ -19,5 +19,5 @@ set(SRC_FILES
     "main.cpp"
     )
 
-add_executable (proj1 ${SRC_FILES})
+add_executable (vig ${SRC_FILES})
 

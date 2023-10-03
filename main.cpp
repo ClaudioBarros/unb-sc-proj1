@@ -142,10 +142,17 @@ int main(int argc, char* argv[])
                 plaintext = read_file(filepath);
             }
 
+            for(auto a : args)
+            {
+                if(a == "-pt")
+                {
+                    set_language(2);
+                }
+            }
+
             attack(plaintext);
             return 0;
         }
-
 
         if(args[0] == "-e")
         {

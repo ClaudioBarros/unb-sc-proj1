@@ -44,9 +44,15 @@ make
 
 #### Breaking a ciphertext
 
+Using english text frequency data:
+
 > \<executable-name\>.exe -a \<filepath\>
+
+Using portuguese text frequency data:
+
+> \<executable-name\>.exe -a \<filepath\> -pt
 
 ## Authors
 
-* **Cláudio Barros** - [@claudiobarros](https://github.com/claudiobarros)
+* **Cláudio Barros** - 190097591 - [@claudiobarros](https://github.com/claudiobarros) 
 
