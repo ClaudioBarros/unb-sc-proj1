@@ -40,7 +40,7 @@ make
 
 #### Encoding and decoding a file
 
-> \<executable-name\>.exe -e \<key\> \<filepath\>
+> \<executable-name\>.exe -ed \<key\> \<filepath\>
 
 #### Breaking a ciphertext
 
@@ -49,8 +49,4 @@ make
 ## Authors
 
 * **Cláudio Barros** - [@claudiobarros](https://github.com/claudiobarros)
-
-## License
-
-[LICENSE](LICENSE) file for details
 
